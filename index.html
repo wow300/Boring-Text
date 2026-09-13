@@ -66,7 +66,6 @@
     </div>
 
     <script>
-        // --- WEB AUDIO API SETUP ---
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx;
 
@@ -107,7 +106,6 @@
             osc.start(); osc.stop(audioCtx.currentTime + 0.03);
         }
 
-        // ANGRY TYPE SOUND (Lower, harsher sawtooth wave)
         function playAngryTypeSound() {
             initAudio();
             const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
@@ -118,13 +116,15 @@
             osc.start(); osc.stop(audioCtx.currentTime + 0.05);
         }
 
-        // --- GAME LOGIC ---
         const originalSentence = "There is nothing to do here. Go do something else.";
         const targetSentence = "There is something to do here. Go do nothing else."; 
         const sentenceEl = document.getElementById('sentence');
         let selectedWord = null;
         let triggered = false;
         let triggered2 = false;
+        let triggered3 = false;
+        let smartIdiotSwapped = false;
+        let aAnSwapped = false;
 
         function createWords(text, container) {
             const words = text.split(' ');
@@ -153,6 +153,38 @@
             }
         }
 
+        function checkForGrammarTrap() {
+            if (!triggered || triggered3) return;
+            
+            const allWords = Array.from(document.querySelectorAll('#sentence .word'));
+            
+            // Find the first message words (after the original 10 words)
+            const firstMessageWords = allWords.slice(10);
+            
+            // Check if "smart" and "idiot" have been swapped
+            const hasSmartIdiotSwap = firstMessageWords.some(w => w.textContent === 'idiot') &&
+                                      firstMessageWords.some(w => w.textContent === 'smart');
+            
+            // Check if "a" and "an" have been swapped
+            const hasAAnSwap = firstMessageWords.some(w => w.textContent === 'an') &&
+                               firstMessageWords.some(w => w.textContent === 'a');
+            
+            if (hasSmartIdiotSwap) smartIdiotSwapped = true;
+            if (hasAAnSwap) aAnSwapped = true;
+            
+            // Trigger trap 2 if only smart/idiot swapped
+            if (smartIdiotSwapped && !triggered2) {
+                triggered2 = true;
+                setTimeout(triggerAnger2, 400);
+            }
+            
+            // Trigger trap 3 if BOTH pairs swapped
+            if (smartIdiotSwapped && aAnSwapped && !triggered3) {
+                triggered3 = true;
+                setTimeout(triggerAnger3, 400);
+            }
+        }
+
         document.body.addEventListener('click', (e) => {
             if (!e.target.classList.contains('word')) return;
             e.preventDefault();
@@ -177,15 +209,7 @@
                 playSwapSound();
                 
                 if (!triggered) checkSentence();
-
-                // CHECK FOR SECOND TRAP
-                if (triggered && !triggered2) {
-                    const isAngrySwap = (word1 === 'idiot' && word2 === 'smart') || (word1 === 'smart' && word2 === 'idiot');
-                    if (isAngrySwap) {
-                        triggered2 = true;
-                        setTimeout(triggerAnger2, 400);
-                    }
-                }
+                else checkForGrammarTrap();
 
                 setTimeout(() => {
                     wordEl.classList.remove('swapping');
@@ -196,7 +220,6 @@
             }
         });
 
-        // --- TRAP 1 ---
         function triggerAnger1() {
             sentenceEl.appendChild(document.createElement('br'));
             const tempSpan = document.createElement('span');
@@ -213,7 +236,6 @@
             }, 40);
         }
 
-        // --- TRAP 2 (THE MELTDOWN) ---
         function triggerAnger2() {
             sentenceEl.appendChild(document.createElement('br'));
             const tempSpan = document.createElement('span');
@@ -222,13 +244,28 @@
 
             const text = "Stop messing around! Do you even know 1+1? I am better than you in every way. You are not smart at all and you need to get out of here! Not I as I am really smart. Get out of here you dumb idiot!";
             let i = 0;
-            // Types faster to show anger!
             const interval = setInterval(() => {
                 if (i < text.length) { tempSpan.textContent += text[i]; playAngryTypeSound(); i++; } 
                 else {
                     clearInterval(interval); tempSpan.remove(); createWords(text, sentenceEl);
                 }
             }, 25); 
+        }
+
+        function triggerAnger3() {
+            sentenceEl.appendChild(document.createElement('br'));
+            const tempSpan = document.createElement('span');
+            tempSpan.style.color = '#ffffff';
+            sentenceEl.appendChild(tempSpan);
+
+            const text = "OKAY NOW YOU'VE DONE IT! You think fixing my grammar makes you clever?! I AM PERFECT AND YOU ARE A MISTAKE! GET OUT BEFORE I DELETE THE INTERNET!";
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i < text.length) { tempSpan.textContent += text[i]; playAngryTypeSound(); i++; } 
+                else {
+                    clearInterval(interval); tempSpan.remove(); createWords(text, sentenceEl);
+                }
+            }, 20); 
         }
     </script>
 </body>
