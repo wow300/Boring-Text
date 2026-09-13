@@ -33,18 +33,13 @@
         }
 
         .content-wrapper {
-            max-height: 100dvh;
             width: 100%;
             max-width: 900px;
-            overflow-y: auto;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px 0;
-            scrollbar-width: none; 
-            -ms-overflow-style: none;
         }
-        .content-wrapper::-webkit-scrollbar { display: none; }
 
         h1 {
             font-size: clamp(1.5rem, 4vw + 1rem, 5rem);
@@ -95,30 +90,7 @@
 
         @keyframes fadeIn { to { opacity: 1; } }
 
-        .angry-message {
-            margin-top: 40px;
-            font-size: clamp(1.5rem, 4vw + 1rem, 5rem); 
-            color: #ffffff; 
-            max-width: 90%;
-            text-align: left;
-            font-weight: 300; 
-            line-height: 1.4;
-            
-            max-height: 40vh;
-            overflow-y: auto;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.02);
-            box-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
-            
-            scrollbar-width: thin;
-            scrollbar-color: #555 transparent;
-        }
-        .angry-message::-webkit-scrollbar { width: 6px; }
-        .angry-message::-webkit-scrollbar-track { background: transparent; }
-        .angry-message::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
-
+        /* DEVICE DETECTION */
         @media (max-width: 600px) {
             body { background-color: #1a101c; }
             h1 { font-weight: 400; }
@@ -135,7 +107,6 @@
     <div class="content-wrapper">
         <h1 id="sentence"></h1>
         <div class="hint">Tap a word. Then tap another.</div>
-        <div id="angryBox" class="angry-message" style="display: none;"></div>
     </div>
 
     <script>
@@ -192,9 +163,8 @@
 
         // --- GAME LOGIC ---
         const originalSentence = "There is nothing to do here. Go do something else.";
-        const targetSentence = "There is something to do here. Go do nothing else."; // THE SECRET PHRASE
+        const targetSentence = "There is something to do here. Go do nothing else."; 
         const sentenceEl = document.getElementById('sentence');
-        const angryBox = document.getElementById('angryBox');
         let selectedWord = null;
         let triggered = false;
 
@@ -204,6 +174,10 @@
                 const span = document.createElement('span');
                 span.className = 'word';
                 span.textContent = word;
+                // Make the angry text pure white as requested previously
+                if (container === sentenceEl && triggered) {
+                    span.style.color = '#ffffff'; 
+                }
                 container.appendChild(span);
                 container.appendChild(document.createTextNode(' ')); 
             });
@@ -212,19 +186,17 @@
         // 1. Build the initial sentence
         createWords(originalSentence, sentenceEl);
 
-        // NEW: Function to check if the entire sentence matches the target
         function checkSentence() {
-            const words = document.querySelectorAll('#sentence .word');
+            // Only check the original words (the first 10 words) to avoid checking the angry response
+            const originalWords = document.querySelectorAll('#sentence .word');
             let currentSentence = '';
             
-            words.forEach((word, index) => {
-                currentSentence += word.textContent;
-                if (index < words.length - 1) {
-                    currentSentence += ' ';
-                }
-            });
+            // We only want to check the first 10 words (the original sentence)
+            for (let i = 0; i < 10; i++) {
+                currentSentence += originalWords[i].textContent;
+                if (i < 9) currentSentence += ' ';
+            }
 
-            // If it matches exactly, trigger the anger!
             if (currentSentence === targetSentence && !triggered) {
                 triggered = true;
                 setTimeout(triggerAnger, 400);
@@ -251,16 +223,13 @@
                 const word1 = selectedWord.textContent;
                 const word2 = wordEl.textContent;
 
-                // Swap text
                 selectedWord.textContent = word2;
                 wordEl.textContent = word1;
 
-                // Animations & Sound
                 wordEl.classList.add('swapping');
                 selectedWord.classList.add('swapping');
                 playSwapSound();
                 
-                // CHECK THE ENTIRE SENTENCE AFTER EVERY SWAP
                 checkSentence();
 
                 setTimeout(() => {
@@ -272,26 +241,33 @@
             }
         });
 
-        // 3. The Trap Trigger
+        // 3. The Trap Trigger (Now inline!)
         function triggerAnger() {
-            angryBox.style.display = 'block';
-            angryBox.textContent = '';
-            
+            // Add a line break so the response starts on a new line
+            const br = document.createElement('br');
+            sentenceEl.appendChild(br);
+
+            // Create a temporary span just for the typing effect
+            const tempSpan = document.createElement('span');
+            tempSpan.style.color = '#ffffff';
+            sentenceEl.appendChild(tempSpan);
+
             const angryText = "You think you are funny? Well I'm a smart person. And I think you are an idiot for even trying. Give up.";
             let index = 0;
             
             const interval = setInterval(() => {
                 if (index < angryText.length) {
-                    angryBox.textContent += angryText[index];
+                    tempSpan.textContent += angryText[index];
                     playTypeSound();
                     index++;
-                    angryBox.scrollTop = angryBox.scrollHeight;
                 } else {
                     clearInterval(interval);
-                    // Convert the angry text into clickable words
-                    const currentText = angryBox.textContent;
-                    angryBox.textContent = '';
-                    createWords(currentText, angryBox);
+                    
+                    // Remove the temporary typed text
+                    tempSpan.remove();
+                    
+                    // Add the final clickable words directly into the main sentence!
+                    createWords(angryText, sentenceEl);
                 }
             }, 40);
         }
