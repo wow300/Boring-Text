@@ -258,36 +258,43 @@
             }
         }
 
-        // FIXED: Checks ONLY if "way." has nothing to its right
+        // BULLETPROOF OMINOUS TRAP CHECK
         function checkForOminousTrap() {
             if (triggeredOminous) return;
-            const allWords = Array.from(document.querySelectorAll('#sentence .word'));
-            if (allWords.length < 4) return;
             
-            // Find the LAST occurrence of "way." or "way"
-            let wayIndex = -1;
-            for (let i = allWords.length - 1; i >= 0; i--) {
-                if (allWords[i].textContent === 'way.' || allWords[i].textContent === 'way') {
-                    wayIndex = i;
-                    break;
-                }
-            }
+            // Find ALL instances of "way." or "way" on the screen
+            const allWords = Array.from(document.querySelectorAll('.word'));
             
-            if (wayIndex === -1) return;
-            
-            // Check if it's the absolute last word
-            if (wayIndex !== allWords.length - 1) return;
-            
-            // Check if the 3 words before it are "I", "know", "a"
-            if (wayIndex >= 3) {
-                const w1 = allWords[wayIndex - 3].textContent;
-                const w2 = allWords[wayIndex - 2].textContent;
-                const w3 = allWords[wayIndex - 1].textContent;
+            for (let i = 0; i < allWords.length; i++) {
+                const word = allWords[i];
+                const text = word.textContent.trim();
                 
-                if (w1 === 'I' && w2 === 'know' && w3 === 'a') {
-                    triggeredOminous = true;
-                    triggerOminousVisual(allWords[wayIndex]); // Pass the "way" element to attach next to it
-                    setTimeout(playOminousSound, 100);
+                // Is this a "way" word?
+                if (text === 'way.' || text === 'way') {
+                    
+                    // CHECK 1: Is it the absolute last element in its parent container?
+                    // This ensures nothing is to its right, even on the same line
+                    if (word.nextElementSibling === null) {
+                        
+                        // CHECK 2: Are the previous 3 siblings exactly "a", "know", "I"?
+                        const prev1 = word.previousElementSibling; // Should be "a"
+                        const prev2 = prev1 ? prev1.previousElementSibling : null; // Should be "know"
+                        const prev3 = prev2 ? prev2.previousElementSibling : null; // Should be "I"
+                        
+                        if (prev1 && prev2 && prev3) {
+                            const t1 = prev1.textContent.trim();
+                            const t2 = prev2.textContent.trim();
+                            const t3 = prev3.textContent.trim();
+                            
+                            if (t1 === 'a' && t2 === 'know' && t3 === 'I') {
+                                console.log("OMINOUS TRAP TRIGGERED!");
+                                triggeredOminous = true;
+                                triggerOminousVisual(word);
+                                setTimeout(playOminousSound, 100);
+                                return; // Stop checking once found
+                            }
+                        }
+                    }
                 }
             }
         }
