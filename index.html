@@ -41,7 +41,6 @@
         }
 
         .word.swapping { animation: swapBounce 0.3s ease; }
-
         .word.cloning { animation: cloneFlash 0.4s ease; }
 
         @keyframes swapBounce {
@@ -185,23 +184,21 @@
             if (!triggered || triggered2) return;
             
             const allWords = Array.from(document.querySelectorAll('#sentence .word'));
+            const firstMessageWords = allWords.slice(10);
             
-            // Split into original sentence area (first 10 words) and first message area
-            const originalArea = allWords.slice(0, 10);
-            const firstMessageArea = allWords.slice(10);
+            // Need at least 17 words in the first message to check all positions
+            if (firstMessageWords.length < 17) return;
             
-            // Check if "idiot" has moved to the original sentence area
-            const idiotInOriginal = originalArea.some(w => w.textContent === 'idiot');
+            // Original first message: "You think you are funny? Well I'm a smart person. And I think you are an idiot for even trying. Give up."
+            // Positions: 7="a", 8="smart", 15="an", 16="idiot"
+            // After BOTH swaps: 7="an", 8="idiot", 15="a", 16="smart"
             
-            // Check if "smart" is still in the first message area
-            const smartInMessage = firstMessageArea.some(w => w.textContent === 'smart');
+            const pos7 = firstMessageWords[7].textContent;
+            const pos8 = firstMessageWords[8].textContent;
+            const pos15 = firstMessageWords[15].textContent;
+            const pos16 = firstMessageWords[16].textContent;
             
-            // Check if "a" and "an" have been swapped (both should be in first message area)
-            const aInMessage = firstMessageArea.some(w => w.textContent === 'a');
-            const anInMessage = firstMessageArea.some(w => w.textContent === 'an');
-            
-            // Trigger only if idiot moved to original AND smart is in message AND a/an are both present
-            if (idiotInOriginal && smartInMessage && aInMessage && anInMessage) {
+            if (pos7 === 'an' && pos8 === 'idiot' && pos15 === 'a' && pos16 === 'smart') {
                 triggered2 = true;
                 setTimeout(triggerAnger2, 400);
             }
