@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- This tells mobile browsers to use the actual device width -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nothing</title>
+    <style>
+        /* Reset default margins */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* 100dvh fixes mobile browser address bar shrinking/expanding issues */
+            min-height: 100dvh; 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            text-align: center;
+            padding: 20px;
+            transition: background-color 0.5s ease;
+        }
+
+        h1 {
+            /* FLUID TYPOGRAPHY: 
+               Scales smoothly between 1.5rem (small phones) and 5rem (huge monitors) 
+               based on the viewport width (vw). */
+            font-size: clamp(1.5rem, 4vw + 1rem, 5rem);
+            font-weight: 300;
+            max-width: 90%;
+            line-height: 1.4;
+            letter-spacing: 0.02em;
+        }
+
+        /* DETECTING SCREEN SIZES: 
+           The page actually changes its background color based on the device! */
+        
+        /* If on a small mobile screen */
+        @media (max-width: 600px) {
+            body {
+                background-color: #1a101c; /* Dark purple tint */
+            }
+            h1 {
+                font-weight: 400;
+            }
+        }
+
+        /* If on a massive desktop/ultrawide screen */
+        @media (min-width: 1600px) {
+            body {
+                background-color: #0a0f14; /* Deep blue/gray tint */
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>There is nothing to do here. Go do something else.</h1>
+</body>
+</html>
