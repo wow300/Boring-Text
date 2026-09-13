@@ -19,12 +19,13 @@
 
         .content-wrapper {
             width: 100%; max-width: 900px; display: flex; flex-direction: column;
-            align-items: center; padding: 20px 0;
+            align-items: center; padding: 20px 0; overflow-y: auto; max-height: 100dvh;
         }
 
         h1 {
             font-size: clamp(1.5rem, 4vw + 1rem, 5rem); font-weight: 300;
             max-width: 90%; line-height: 1.4; letter-spacing: 0.02em;
+            word-wrap: break-word;
         }
 
         .word {
@@ -53,11 +54,19 @@
             100% { transform: scale(1); background-color: transparent; }
         }
 
-        .ominous {
-            color: #ff0000;
+        /* OPTIMIZED RED TEXT STYLES */
+        .ominous-container {
+            display: inline-block;
+            white-space: nowrap; /* Forces it to stretch right only */
+            vertical-align: baseline;
+        }
+
+        .ominous-text {
+            color: #ff0000 !important; /* Force red */
             font-style: italic;
             text-shadow: 0 0 15px rgba(255, 0, 0, 0.6), 0 0 30px rgba(255, 0, 0, 0.3);
             animation: ominousPulse 2s ease-in-out infinite;
+            display: inline;
         }
 
         @keyframes ominousPulse {
@@ -88,12 +97,9 @@
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx;
 
-        // FORCE AUDIO WAKEUP ON EVERY TAP
         function initAudio() {
             if (!audioCtx) audioCtx = new AudioContext();
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume().then(() => console.log('Audio resumed'));
-            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
         }
 
         function playSelectSound() {
@@ -252,21 +258,37 @@
             }
         }
 
+        // FIXED: Checks ONLY if "way." has nothing to its right
         function checkForOminousTrap() {
             if (triggeredOminous) return;
             const allWords = Array.from(document.querySelectorAll('#sentence .word'));
             if (allWords.length < 4) return;
             
-            // Check last 4 words for "I know a way." OR "I know a way"
-            const last4 = allWords.slice(-4).map(w => w.textContent);
-            const isMatch = (last4[0] === 'I' && last4[1] === 'know' && last4[2] === 'a' && 
-                           (last4[3] === 'way.' || last4[3] === 'way'));
+            // Find the LAST occurrence of "way." or "way"
+            let wayIndex = -1;
+            for (let i = allWords.length - 1; i >= 0; i--) {
+                if (allWords[i].textContent === 'way.' || allWords[i].textContent === 'way') {
+                    wayIndex = i;
+                    break;
+                }
+            }
             
-            if (isMatch) {
-                triggeredOminous = true;
-                // VISUAL TRIGGER FIRST (so it works even if audio fails)
-                triggerOminousVisual();
-                setTimeout(playOminousSound, 100); // Try audio separately
+            if (wayIndex === -1) return;
+            
+            // Check if it's the absolute last word
+            if (wayIndex !== allWords.length - 1) return;
+            
+            // Check if the 3 words before it are "I", "know", "a"
+            if (wayIndex >= 3) {
+                const w1 = allWords[wayIndex - 3].textContent;
+                const w2 = allWords[wayIndex - 2].textContent;
+                const w3 = allWords[wayIndex - 1].textContent;
+                
+                if (w1 === 'I' && w2 === 'know' && w3 === 'a') {
+                    triggeredOminous = true;
+                    triggerOminousVisual(allWords[wayIndex]); // Pass the "way" element to attach next to it
+                    setTimeout(playOminousSound, 100);
+                }
             }
         }
 
@@ -275,7 +297,6 @@
             e.preventDefault();
             const wordEl = e.target;
 
-            // ALWAYS INIT AUDIO ON TAP
             initAudio();
 
             if (!selectedWord) {
@@ -351,29 +372,37 @@
             }, 25); 
         }
 
-        function triggerOminousVisual() {
+        // OPTIMIZED: Uses a single text node for typing, converts to spans only at the end
+        function triggerOminousVisual(wayElement) {
             document.body.style.backgroundColor = '#1a0000';
-            sentenceEl.appendChild(document.createElement('br'));
-            const ominousSpan = document.createElement('span');
-            ominousSpan.className = 'ominous';
-            sentenceEl.appendChild(ominousSpan);
+            
+            // Create container that stays inline with "way."
+            const container = document.createElement('span');
+            container.className = 'ominous-container';
+            
+            // Insert AFTER the "way." element
+            wayElement.parentNode.insertBefore(container, wayElement.nextSibling);
+            
+            // Use a simple text node for performance during typing
+            const textNode = document.createTextNode('');
+            container.appendChild(textNode);
 
             const text = "Oh I know a way indeed. A way to death perhaps?";
             let i = 0;
             const interval = setInterval(() => {
                 if (i < text.length) {
-                    ominousSpan.textContent += text[i];
+                    textNode.textContent += text[i];
                     playOminousTypeSound();
                     i++;
                 } else {
                     clearInterval(interval);
-                    const finalText = ominousSpan.textContent;
-                    ominousSpan.remove();
-                    const words = finalText.split(' ');
+                    // Convert to clickable spans ONLY after typing is done
+                    container.innerHTML = '';
+                    const words = text.split(' ');
                     words.forEach(word => {
                         const span = document.createElement('span');
                         span.className = 'word ominous'; span.textContent = word;
-                        sentenceEl.appendChild(span); sentenceEl.appendChild(document.createTextNode(' '));
+                        container.appendChild(span); container.appendChild(document.createTextNode(' '));
                     });
                 }
             }, 80);
