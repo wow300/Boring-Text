@@ -124,7 +124,6 @@
             osc.start(); osc.stop(audioCtx.currentTime + 0.05);
         }
 
-        // NEW: Clone sound effect (bright, ascending chime)
         function playCloneSound() {
             initAudio();
             const osc1 = audioCtx.createOscillator();
@@ -186,15 +185,23 @@
             if (!triggered || triggered2) return;
             
             const allWords = Array.from(document.querySelectorAll('#sentence .word'));
-            const firstMessageWords = allWords.slice(10);
             
-            const hasSmartIdiotSwap = firstMessageWords.some(w => w.textContent === 'idiot') &&
-                                      firstMessageWords.some(w => w.textContent === 'smart');
+            // Split into original sentence area (first 10 words) and first message area
+            const originalArea = allWords.slice(0, 10);
+            const firstMessageArea = allWords.slice(10);
             
-            const hasAAnSwap = firstMessageWords.some(w => w.textContent === 'an') &&
-                               firstMessageWords.some(w => w.textContent === 'a');
+            // Check if "idiot" has moved to the original sentence area
+            const idiotInOriginal = originalArea.some(w => w.textContent === 'idiot');
             
-            if (hasSmartIdiotSwap && hasAAnSwap) {
+            // Check if "smart" is still in the first message area
+            const smartInMessage = firstMessageArea.some(w => w.textContent === 'smart');
+            
+            // Check if "a" and "an" have been swapped (both should be in first message area)
+            const aInMessage = firstMessageArea.some(w => w.textContent === 'a');
+            const anInMessage = firstMessageArea.some(w => w.textContent === 'an');
+            
+            // Trigger only if idiot moved to original AND smart is in message AND a/an are both present
+            if (idiotInOriginal && smartInMessage && aInMessage && anInMessage) {
                 triggered2 = true;
                 setTimeout(triggerAnger2, 400);
             }
@@ -216,29 +223,21 @@
                 const word1 = selectedWord.textContent;
                 const word2 = wordEl.textContent;
 
-                // CHECK FOR CLONE MECHANIC
                 if (word1 === '+' || word2 === '+') {
-                    // Find which element is the "+" and which is the word to clone
                     const plusElement = word1 === '+' ? selectedWord : wordEl;
                     const wordToClone = word1 === '+' ? wordEl : selectedWord;
                     const wordText = wordToClone.textContent;
 
-                    // Remove the "+"
                     plusElement.remove();
 
-                    // Create a duplicate of the word
                     const duplicate = document.createElement('span');
                     duplicate.className = 'word';
                     duplicate.textContent = wordText;
                     duplicate.style.color = '#ffffff';
 
-                    // Insert it right after the original word
                     wordToClone.parentNode.insertBefore(duplicate, wordToClone.nextSibling);
-                    
-                    // Add a space node after the duplicate
                     wordToClone.parentNode.insertBefore(document.createTextNode(' '), duplicate.nextSibling);
 
-                    // Play clone sound and add animation
                     playCloneSound();
                     wordToClone.classList.add('cloning');
                     duplicate.classList.add('cloning');
@@ -253,7 +252,6 @@
                     return;
                 }
 
-                // Normal swap logic
                 selectedWord.textContent = word2;
                 wordEl.textContent = word1;
 
