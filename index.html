@@ -5,101 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nothing</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: flex; justify-content: center; align-items: center;
             min-height: 100dvh; 
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #121212;
-            color: #e0e0e0;
-            text-align: center;
-            padding: 20px;
-            transition: background-color 0.5s ease;
-            
-            /* PREVENT ALL HIGHLIGHTING & ZOOMING */
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
-            touch-action: manipulation;
+            background-color: #121212; color: #e0e0e0; text-align: center;
+            padding: 20px; transition: background-color 0.5s ease;
+            -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;
+            user-select: none; -webkit-touch-callout: none; touch-action: manipulation;
         }
 
         .content-wrapper {
-            width: 100%;
-            max-width: 900px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px 0;
+            width: 100%; max-width: 900px; display: flex; flex-direction: column;
+            align-items: center; padding: 20px 0;
         }
 
         h1 {
-            font-size: clamp(1.5rem, 4vw + 1rem, 5rem);
-            font-weight: 300;
-            max-width: 90%;
-            line-height: 1.4;
-            letter-spacing: 0.02em;
+            font-size: clamp(1.5rem, 4vw + 1rem, 5rem); font-weight: 300;
+            max-width: 90%; line-height: 1.4; letter-spacing: 0.02em;
         }
 
         .word {
-            cursor: pointer;
-            display: inline-block;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
-                        color 0.2s, 
-                        background-color 0.2s;
-            padding: 0 0.1em;
-            border-radius: 6px;
-            -webkit-tap-highlight-color: transparent; 
+            cursor: pointer; display: inline-block;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.2s, background-color 0.2s;
+            padding: 0 0.1em; border-radius: 6px; -webkit-tap-highlight-color: transparent; 
         }
 
         .word:hover { color: #fff; }
 
         .word.selected {
-            background-color: rgba(255, 255, 255, 0.15);
-            color: #fff;
-            transform: scale(1.15);
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.15); color: #fff;
+            transform: scale(1.15); box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
         }
 
         .word.swapping { animation: swapBounce 0.3s ease; }
 
         @keyframes swapBounce {
-            0% { transform: scale(1.15); }
-            50% { transform: scale(0.85); }
-            100% { transform: scale(1); }
+            0% { transform: scale(1.15); } 50% { transform: scale(0.85); } 100% { transform: scale(1); }
         }
 
         .hint {
-            margin-top: 30px;
-            font-size: 0.9rem;
-            color: #555;
-            font-weight: 300;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            opacity: 0;
+            margin-top: 30px; font-size: 0.9rem; color: #555; font-weight: 300;
+            letter-spacing: 0.1em; text-transform: uppercase; opacity: 0;
             animation: fadeIn 2s ease forwards 1s;
         }
 
         @keyframes fadeIn { to { opacity: 1; } }
 
-        /* DEVICE DETECTION */
-        @media (max-width: 600px) {
-            body { background-color: #1a101c; }
-            h1 { font-weight: 400; }
-            .hint { font-size: 0.75rem; }
-        }
-
-        @media (min-width: 1600px) {
-            body { background-color: #0a0f14; }
-        }
+        @media (max-width: 600px) { body { background-color: #1a101c; } h1 { font-weight: 400; } .hint { font-size: 0.75rem; } }
+        @media (min-width: 1600px) { body { background-color: #0a0f14; } }
     </style>
 </head>
 <body>
@@ -115,20 +71,14 @@
         let audioCtx;
 
         function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new AudioContext();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
         }
 
         function playSelectSound() {
             initAudio();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'sine';
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'sine';
             osc.frequency.setValueAtTime(800, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.1);
             gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
@@ -138,10 +88,8 @@
 
         function playSwapSound() {
             initAudio();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'square';
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'square';
             osc.frequency.setValueAtTime(200, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.15);
             gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
@@ -151,14 +99,23 @@
 
         function playTypeSound() {
             initAudio();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'triangle';
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'triangle';
             osc.frequency.setValueAtTime(1200 + Math.random() * 600, audioCtx.currentTime);
             gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.03);
             osc.start(); osc.stop(audioCtx.currentTime + 0.03);
+        }
+
+        // ANGRY TYPE SOUND (Lower, harsher sawtooth wave)
+        function playAngryTypeSound() {
+            initAudio();
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300 + Math.random() * 200, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.05);
         }
 
         // --- GAME LOGIC ---
@@ -167,6 +124,7 @@
         const sentenceEl = document.getElementById('sentence');
         let selectedWord = null;
         let triggered = false;
+        let triggered2 = false;
 
         function createWords(text, container) {
             const words = text.split(' ');
@@ -174,39 +132,29 @@
                 const span = document.createElement('span');
                 span.className = 'word';
                 span.textContent = word;
-                // Make the angry text pure white as requested previously
-                if (container === sentenceEl && triggered) {
-                    span.style.color = '#ffffff'; 
-                }
+                span.style.color = '#ffffff';
                 container.appendChild(span);
                 container.appendChild(document.createTextNode(' ')); 
             });
         }
 
-        // 1. Build the initial sentence
         createWords(originalSentence, sentenceEl);
 
         function checkSentence() {
-            // Only check the original words (the first 10 words) to avoid checking the angry response
-            const originalWords = document.querySelectorAll('#sentence .word');
+            const allWords = document.querySelectorAll('#sentence .word');
             let currentSentence = '';
-            
-            // We only want to check the first 10 words (the original sentence)
-            for (let i = 0; i < 10; i++) {
-                currentSentence += originalWords[i].textContent;
+            for (let i = 0; i < Math.min(10, allWords.length); i++) {
+                currentSentence += allWords[i].textContent;
                 if (i < 9) currentSentence += ' ';
             }
-
             if (currentSentence === targetSentence && !triggered) {
                 triggered = true;
-                setTimeout(triggerAnger, 400);
+                setTimeout(triggerAnger1, 400);
             }
         }
 
-        // 2. Global Click Handler
         document.body.addEventListener('click', (e) => {
             if (!e.target.classList.contains('word')) return;
-            
             e.preventDefault();
             const wordEl = e.target;
 
@@ -214,12 +162,10 @@
                 selectedWord = wordEl;
                 wordEl.classList.add('selected');
                 playSelectSound();
-            } 
-            else if (selectedWord === wordEl) {
+            } else if (selectedWord === wordEl) {
                 wordEl.classList.remove('selected');
                 selectedWord = null;
-            } 
-            else {
+            } else {
                 const word1 = selectedWord.textContent;
                 const word2 = wordEl.textContent;
 
@@ -230,7 +176,16 @@
                 selectedWord.classList.add('swapping');
                 playSwapSound();
                 
-                checkSentence();
+                if (!triggered) checkSentence();
+
+                // CHECK FOR SECOND TRAP
+                if (triggered && !triggered2) {
+                    const isAngrySwap = (word1 === 'idiot' && word2 === 'smart') || (word1 === 'smart' && word2 === 'idiot');
+                    if (isAngrySwap) {
+                        triggered2 = true;
+                        setTimeout(triggerAnger2, 400);
+                    }
+                }
 
                 setTimeout(() => {
                     wordEl.classList.remove('swapping');
@@ -241,35 +196,39 @@
             }
         });
 
-        // 3. The Trap Trigger (Now inline!)
-        function triggerAnger() {
-            // Add a line break so the response starts on a new line
-            const br = document.createElement('br');
-            sentenceEl.appendChild(br);
-
-            // Create a temporary span just for the typing effect
+        // --- TRAP 1 ---
+        function triggerAnger1() {
+            sentenceEl.appendChild(document.createElement('br'));
             const tempSpan = document.createElement('span');
             tempSpan.style.color = '#ffffff';
             sentenceEl.appendChild(tempSpan);
 
-            const angryText = "You think you are funny? Well I'm a smart person. And I think you are an idiot for even trying. Give up.";
-            let index = 0;
-            
+            const text = "You think you are funny? Well I'm a smart person. And I think you are an idiot for even trying. Give up.";
+            let i = 0;
             const interval = setInterval(() => {
-                if (index < angryText.length) {
-                    tempSpan.textContent += angryText[index];
-                    playTypeSound();
-                    index++;
-                } else {
-                    clearInterval(interval);
-                    
-                    // Remove the temporary typed text
-                    tempSpan.remove();
-                    
-                    // Add the final clickable words directly into the main sentence!
-                    createWords(angryText, sentenceEl);
+                if (i < text.length) { tempSpan.textContent += text[i]; playTypeSound(); i++; } 
+                else {
+                    clearInterval(interval); tempSpan.remove(); createWords(text, sentenceEl);
                 }
             }, 40);
+        }
+
+        // --- TRAP 2 (THE MELTDOWN) ---
+        function triggerAnger2() {
+            sentenceEl.appendChild(document.createElement('br'));
+            const tempSpan = document.createElement('span');
+            tempSpan.style.color = '#ffffff';
+            sentenceEl.appendChild(tempSpan);
+
+            const text = "Stop messing around! Do you even know 1+1? I am better than you in every way. You are not smart at all and you need to get out of here! Not I as I am really smart. Get out of here you dumb idiot!";
+            let i = 0;
+            // Types faster to show anger!
+            const interval = setInterval(() => {
+                if (i < text.length) { tempSpan.textContent += text[i]; playAngryTypeSound(); i++; } 
+                else {
+                    clearInterval(interval); tempSpan.remove(); createWords(text, sentenceEl);
+                }
+            }, 25); 
         }
     </script>
 </body>
