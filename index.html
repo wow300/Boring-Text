@@ -12,7 +12,7 @@
             min-height: 100dvh; 
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #121212; color: #e0e0e0; text-align: center;
-            padding: 20px; transition: background-color 0.5s ease;
+            padding: 20px; transition: background-color 1s ease;
             -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;
             user-select: none; -webkit-touch-callout: none; touch-action: manipulation;
         }
@@ -51,6 +51,18 @@
             0% { transform: scale(1); background-color: rgba(255, 255, 0, 0.5); }
             50% { transform: scale(1.3); background-color: rgba(255, 255, 0, 0.8); }
             100% { transform: scale(1); background-color: transparent; }
+        }
+
+        .ominous {
+            color: #ff0000;
+            font-style: italic;
+            text-shadow: 0 0 15px rgba(255, 0, 0, 0.6), 0 0 30px rgba(255, 0, 0, 0.3);
+            animation: ominousPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes ominousPulse {
+            0%, 100% { text-shadow: 0 0 15px rgba(255, 0, 0, 0.6), 0 0 30px rgba(255, 0, 0, 0.3); }
+            50% { text-shadow: 0 0 25px rgba(255, 0, 0, 0.9), 0 0 50px rgba(255, 0, 0, 0.5); }
         }
 
         .hint {
@@ -128,22 +140,68 @@
             const osc1 = audioCtx.createOscillator();
             const osc2 = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            
             osc1.connect(gain); osc2.connect(gain); gain.connect(audioCtx.destination);
             osc1.type = 'sine'; osc2.type = 'sine';
-            
             osc1.frequency.setValueAtTime(600, audioCtx.currentTime);
             osc1.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.15);
-            
             osc2.frequency.setValueAtTime(900, audioCtx.currentTime);
             osc2.frequency.exponentialRampToValueAtTime(1800, audioCtx.currentTime + 0.15);
-            
             gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-            
             osc1.start(); osc2.start();
             osc1.stop(audioCtx.currentTime + 0.2);
             osc2.stop(audioCtx.currentTime + 0.2);
+        }
+
+        // OMINOUS DRONE SOUND (low, creepy, rumbling)
+        function playOminousSound() {
+            initAudio();
+            // Deep bass drone
+            const osc1 = audioCtx.createOscillator();
+            const gain1 = audioCtx.createGain();
+            osc1.connect(gain1); gain1.connect(audioCtx.destination);
+            osc1.type = 'sawtooth';
+            osc1.frequency.setValueAtTime(55, audioCtx.currentTime);
+            osc1.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 3);
+            gain1.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain1.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 0.5);
+            gain1.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 2);
+            gain1.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 3);
+            osc1.start(); osc1.stop(audioCtx.currentTime + 3);
+
+            // Eerie high whisper
+            const osc2 = audioCtx.createOscillator();
+            const gain2 = audioCtx.createGain();
+            osc2.connect(gain2); gain2.connect(audioCtx.destination);
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc2.frequency.linearRampToValueAtTime(600, audioCtx.currentTime + 2);
+            gain2.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain2.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 0.8);
+            gain2.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2.5);
+            osc2.start(); osc2.stop(audioCtx.currentTime + 2.5);
+
+            // Dissonant mid tone
+            const osc3 = audioCtx.createOscillator();
+            const gain3 = audioCtx.createGain();
+            osc3.connect(gain3); gain3.connect(audioCtx.destination);
+            osc3.type = 'triangle';
+            osc3.frequency.setValueAtTime(113, audioCtx.currentTime);
+            gain3.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain3.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 1);
+            gain3.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 3);
+            osc3.start(); osc3.stop(audioCtx.currentTime + 3);
+        }
+
+        function playOminousTypeSound() {
+            initAudio();
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(150 + Math.random() * 100, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.08);
         }
 
         const originalSentence = "There is nothing to do here. Go do something else.";
@@ -152,14 +210,12 @@
         let selectedWord = null;
         let triggered = false;
         let triggered2 = false;
+        let triggeredOminous = false;
 
-        // FIXED: Split on spaces AND plus signs so "1+1" becomes "1", "+", "1"
         function createWords(text, container) {
-            // Split by spaces first, then split each word by + if it contains it
             const words = text.split(' ');
             words.forEach(word => {
                 if (word.includes('+')) {
-                    // Split "1+1" into ["1", "+", "1"]
                     const parts = word.split('+');
                     parts.forEach((part, index) => {
                         if (part) {
@@ -171,7 +227,6 @@
                             container.appendChild(document.createTextNode(' '));
                         }
                         if (index < parts.length - 1) {
-                            // Add the + as its own word
                             const plusSpan = document.createElement('span');
                             plusSpan.className = 'word';
                             plusSpan.textContent = '+';
@@ -222,6 +277,22 @@
             if (pos7 === 'an' && pos8 === 'idiot' && pos15 === 'a' && pos16 === 'smart') {
                 triggered2 = true;
                 setTimeout(triggerAnger2, 400);
+            }
+        }
+
+        // CHECK IF THE TEXT ENDS WITH "I know a way."
+        function checkForOminousTrap() {
+            if (triggeredOminous) return;
+            
+            const allWords = Array.from(document.querySelectorAll('#sentence .word'));
+            if (allWords.length < 4) return;
+            
+            // Get the last 4 words
+            const last4 = allWords.slice(-4).map(w => w.textContent);
+            
+            if (last4[0] === 'I' && last4[1] === 'know' && last4[2] === 'a' && last4[3] === 'way.') {
+                triggeredOminous = true;
+                setTimeout(triggerOminous, 500);
             }
         }
 
@@ -279,6 +350,9 @@
                 
                 if (!triggered) checkSentence();
                 else checkForGrammarTrap();
+                
+                // Always check for the ominous trap
+                checkForOminousTrap();
 
                 setTimeout(() => {
                     wordEl.classList.remove('swapping');
@@ -319,6 +393,49 @@
                     clearInterval(interval); tempSpan.remove(); createWords(text, sentenceEl);
                 }
             }, 25); 
+        }
+
+        // THE OMINOUS TRAP
+        function triggerOminous() {
+            // Darken the background to deep red-black
+            document.body.style.backgroundColor = '#1a0000';
+            
+            // Play the creepy drone
+            playOminousSound();
+            
+            // Add a line break after "way."
+            sentenceEl.appendChild(document.createElement('br'));
+            
+            // Create the red ominous text container
+            const ominousSpan = document.createElement('span');
+            ominousSpan.className = 'ominous';
+            sentenceEl.appendChild(ominousSpan);
+
+            const text = "Oh I know a way indeed. A way to death perhaps?";
+            let i = 0;
+            
+            // Slow, deliberate typing
+            const interval = setInterval(() => {
+                if (i < text.length) {
+                    ominousSpan.textContent += text[i];
+                    playOminousTypeSound();
+                    i++;
+                } else {
+                    clearInterval(interval);
+                    // Convert to clickable words after typing finishes
+                    const finalText = ominousSpan.textContent;
+                    ominousSpan.remove();
+                    
+                    const words = finalText.split(' ');
+                    words.forEach(word => {
+                        const span = document.createElement('span');
+                        span.className = 'word ominous';
+                        span.textContent = word;
+                        sentenceEl.appendChild(span);
+                        sentenceEl.appendChild(document.createTextNode(' '));
+                    });
+                }
+            }, 80); // Slow and creepy
         }
     </script>
 </body>
