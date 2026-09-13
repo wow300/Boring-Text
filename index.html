@@ -42,8 +42,16 @@
 
         .word.swapping { animation: swapBounce 0.3s ease; }
 
+        .word.cloning { animation: cloneFlash 0.4s ease; }
+
         @keyframes swapBounce {
             0% { transform: scale(1.15); } 50% { transform: scale(0.85); } 100% { transform: scale(1); }
+        }
+
+        @keyframes cloneFlash {
+            0% { transform: scale(1); background-color: rgba(255, 255, 0, 0.5); }
+            50% { transform: scale(1.3); background-color: rgba(255, 255, 0, 0.8); }
+            100% { transform: scale(1); background-color: transparent; }
         }
 
         .hint {
@@ -116,6 +124,30 @@
             osc.start(); osc.stop(audioCtx.currentTime + 0.05);
         }
 
+        // NEW: Clone sound effect (bright, ascending chime)
+        function playCloneSound() {
+            initAudio();
+            const osc1 = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc1.connect(gain); osc2.connect(gain); gain.connect(audioCtx.destination);
+            osc1.type = 'sine'; osc2.type = 'sine';
+            
+            osc1.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc1.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.15);
+            
+            osc2.frequency.setValueAtTime(900, audioCtx.currentTime);
+            osc2.frequency.exponentialRampToValueAtTime(1800, audioCtx.currentTime + 0.15);
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            
+            osc1.start(); osc2.start();
+            osc1.stop(audioCtx.currentTime + 0.2);
+            osc2.stop(audioCtx.currentTime + 0.2);
+        }
+
         const originalSentence = "There is nothing to do here. Go do something else.";
         const targetSentence = "There is something to do here. Go do nothing else."; 
         const sentenceEl = document.getElementById('sentence');
@@ -156,14 +188,12 @@
             const allWords = Array.from(document.querySelectorAll('#sentence .word'));
             const firstMessageWords = allWords.slice(10);
             
-            // Check if BOTH pairs have been swapped
             const hasSmartIdiotSwap = firstMessageWords.some(w => w.textContent === 'idiot') &&
                                       firstMessageWords.some(w => w.textContent === 'smart');
             
             const hasAAnSwap = firstMessageWords.some(w => w.textContent === 'an') &&
                                firstMessageWords.some(w => w.textContent === 'a');
             
-            // Only trigger if BOTH conditions are met
             if (hasSmartIdiotSwap && hasAAnSwap) {
                 triggered2 = true;
                 setTimeout(triggerAnger2, 400);
@@ -186,6 +216,44 @@
                 const word1 = selectedWord.textContent;
                 const word2 = wordEl.textContent;
 
+                // CHECK FOR CLONE MECHANIC
+                if (word1 === '+' || word2 === '+') {
+                    // Find which element is the "+" and which is the word to clone
+                    const plusElement = word1 === '+' ? selectedWord : wordEl;
+                    const wordToClone = word1 === '+' ? wordEl : selectedWord;
+                    const wordText = wordToClone.textContent;
+
+                    // Remove the "+"
+                    plusElement.remove();
+
+                    // Create a duplicate of the word
+                    const duplicate = document.createElement('span');
+                    duplicate.className = 'word';
+                    duplicate.textContent = wordText;
+                    duplicate.style.color = '#ffffff';
+
+                    // Insert it right after the original word
+                    wordToClone.parentNode.insertBefore(duplicate, wordToClone.nextSibling);
+                    
+                    // Add a space node after the duplicate
+                    wordToClone.parentNode.insertBefore(document.createTextNode(' '), duplicate.nextSibling);
+
+                    // Play clone sound and add animation
+                    playCloneSound();
+                    wordToClone.classList.add('cloning');
+                    duplicate.classList.add('cloning');
+                    
+                    setTimeout(() => {
+                        wordToClone.classList.remove('cloning');
+                        duplicate.classList.remove('cloning');
+                        selectedWord.classList.remove('selected');
+                        selectedWord = null;
+                    }, 400);
+                    
+                    return;
+                }
+
+                // Normal swap logic
                 selectedWord.textContent = word2;
                 wordEl.textContent = word1;
 
