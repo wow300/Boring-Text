@@ -153,15 +153,41 @@
         let triggered = false;
         let triggered2 = false;
 
+        // FIXED: Split on spaces AND plus signs so "1+1" becomes "1", "+", "1"
         function createWords(text, container) {
+            // Split by spaces first, then split each word by + if it contains it
             const words = text.split(' ');
             words.forEach(word => {
-                const span = document.createElement('span');
-                span.className = 'word';
-                span.textContent = word;
-                span.style.color = '#ffffff';
-                container.appendChild(span);
-                container.appendChild(document.createTextNode(' ')); 
+                if (word.includes('+')) {
+                    // Split "1+1" into ["1", "+", "1"]
+                    const parts = word.split('+');
+                    parts.forEach((part, index) => {
+                        if (part) {
+                            const span = document.createElement('span');
+                            span.className = 'word';
+                            span.textContent = part;
+                            span.style.color = '#ffffff';
+                            container.appendChild(span);
+                            container.appendChild(document.createTextNode(' '));
+                        }
+                        if (index < parts.length - 1) {
+                            // Add the + as its own word
+                            const plusSpan = document.createElement('span');
+                            plusSpan.className = 'word';
+                            plusSpan.textContent = '+';
+                            plusSpan.style.color = '#ffffff';
+                            container.appendChild(plusSpan);
+                            container.appendChild(document.createTextNode(' '));
+                        }
+                    });
+                } else {
+                    const span = document.createElement('span');
+                    span.className = 'word';
+                    span.textContent = word;
+                    span.style.color = '#ffffff';
+                    container.appendChild(span);
+                    container.appendChild(document.createTextNode(' ')); 
+                }
             });
         }
 
@@ -186,12 +212,7 @@
             const allWords = Array.from(document.querySelectorAll('#sentence .word'));
             const firstMessageWords = allWords.slice(10);
             
-            // Need at least 17 words in the first message to check all positions
             if (firstMessageWords.length < 17) return;
-            
-            // Original first message: "You think you are funny? Well I'm a smart person. And I think you are an idiot for even trying. Give up."
-            // Positions: 7="a", 8="smart", 15="an", 16="idiot"
-            // After BOTH swaps: 7="an", 8="idiot", 15="a", 16="smart"
             
             const pos7 = firstMessageWords[7].textContent;
             const pos8 = firstMessageWords[8].textContent;
