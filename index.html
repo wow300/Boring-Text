@@ -88,9 +88,12 @@
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx;
 
+        // FORCE AUDIO WAKEUP ON EVERY TAP
         function initAudio() {
             if (!audioCtx) audioCtx = new AudioContext();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().then(() => console.log('Audio resumed'));
+            }
         }
 
         function playSelectSound() {
@@ -153,51 +156,31 @@
             osc2.stop(audioCtx.currentTime + 0.2);
         }
 
-        // OMINOUS DRONE SOUND (low, creepy, rumbling)
         function playOminousSound() {
             initAudio();
-            // Deep bass drone
-            const osc1 = audioCtx.createOscillator();
-            const gain1 = audioCtx.createGain();
-            osc1.connect(gain1); gain1.connect(audioCtx.destination);
-            osc1.type = 'sawtooth';
+            const osc1 = audioCtx.createOscillator(); const gain1 = audioCtx.createGain();
+            osc1.connect(gain1); gain1.connect(audioCtx.destination); osc1.type = 'sawtooth';
             osc1.frequency.setValueAtTime(55, audioCtx.currentTime);
             osc1.frequency.linearRampToValueAtTime(40, audioCtx.currentTime + 3);
             gain1.gain.setValueAtTime(0, audioCtx.currentTime);
             gain1.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 0.5);
-            gain1.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 2);
             gain1.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 3);
             osc1.start(); osc1.stop(audioCtx.currentTime + 3);
 
-            // Eerie high whisper
-            const osc2 = audioCtx.createOscillator();
-            const gain2 = audioCtx.createGain();
-            osc2.connect(gain2); gain2.connect(audioCtx.destination);
-            osc2.type = 'sine';
+            const osc2 = audioCtx.createOscillator(); const gain2 = audioCtx.createGain();
+            osc2.connect(gain2); gain2.connect(audioCtx.destination); osc2.type = 'sine';
             osc2.frequency.setValueAtTime(800, audioCtx.currentTime);
             osc2.frequency.linearRampToValueAtTime(600, audioCtx.currentTime + 2);
             gain2.gain.setValueAtTime(0, audioCtx.currentTime);
             gain2.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 0.8);
             gain2.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2.5);
             osc2.start(); osc2.stop(audioCtx.currentTime + 2.5);
-
-            // Dissonant mid tone
-            const osc3 = audioCtx.createOscillator();
-            const gain3 = audioCtx.createGain();
-            osc3.connect(gain3); gain3.connect(audioCtx.destination);
-            osc3.type = 'triangle';
-            osc3.frequency.setValueAtTime(113, audioCtx.currentTime);
-            gain3.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain3.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 1);
-            gain3.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 3);
-            osc3.start(); osc3.stop(audioCtx.currentTime + 3);
         }
 
         function playOminousTypeSound() {
             initAudio();
             const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'sine';
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'sine';
             osc.frequency.setValueAtTime(150 + Math.random() * 100, audioCtx.currentTime);
             gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
@@ -220,28 +203,19 @@
                     parts.forEach((part, index) => {
                         if (part) {
                             const span = document.createElement('span');
-                            span.className = 'word';
-                            span.textContent = part;
-                            span.style.color = '#ffffff';
-                            container.appendChild(span);
-                            container.appendChild(document.createTextNode(' '));
+                            span.className = 'word'; span.textContent = part; span.style.color = '#ffffff';
+                            container.appendChild(span); container.appendChild(document.createTextNode(' '));
                         }
                         if (index < parts.length - 1) {
                             const plusSpan = document.createElement('span');
-                            plusSpan.className = 'word';
-                            plusSpan.textContent = '+';
-                            plusSpan.style.color = '#ffffff';
-                            container.appendChild(plusSpan);
-                            container.appendChild(document.createTextNode(' '));
+                            plusSpan.className = 'word'; plusSpan.textContent = '+'; plusSpan.style.color = '#ffffff';
+                            container.appendChild(plusSpan); container.appendChild(document.createTextNode(' '));
                         }
                     });
                 } else {
                     const span = document.createElement('span');
-                    span.className = 'word';
-                    span.textContent = word;
-                    span.style.color = '#ffffff';
-                    container.appendChild(span);
-                    container.appendChild(document.createTextNode(' ')); 
+                    span.className = 'word'; span.textContent = word; span.style.color = '#ffffff';
+                    container.appendChild(span); container.appendChild(document.createTextNode(' ')); 
                 }
             });
         }
@@ -263,10 +237,8 @@
 
         function checkForGrammarTrap() {
             if (!triggered || triggered2) return;
-            
             const allWords = Array.from(document.querySelectorAll('#sentence .word'));
             const firstMessageWords = allWords.slice(10);
-            
             if (firstMessageWords.length < 17) return;
             
             const pos7 = firstMessageWords[7].textContent;
@@ -280,19 +252,21 @@
             }
         }
 
-        // CHECK IF THE TEXT ENDS WITH "I know a way."
         function checkForOminousTrap() {
             if (triggeredOminous) return;
-            
             const allWords = Array.from(document.querySelectorAll('#sentence .word'));
             if (allWords.length < 4) return;
             
-            // Get the last 4 words
+            // Check last 4 words for "I know a way." OR "I know a way"
             const last4 = allWords.slice(-4).map(w => w.textContent);
+            const isMatch = (last4[0] === 'I' && last4[1] === 'know' && last4[2] === 'a' && 
+                           (last4[3] === 'way.' || last4[3] === 'way'));
             
-            if (last4[0] === 'I' && last4[1] === 'know' && last4[2] === 'a' && last4[3] === 'way.') {
+            if (isMatch) {
                 triggeredOminous = true;
-                setTimeout(triggerOminous, 500);
+                // VISUAL TRIGGER FIRST (so it works even if audio fails)
+                triggerOminousVisual();
+                setTimeout(playOminousSound, 100); // Try audio separately
             }
         }
 
@@ -300,6 +274,9 @@
             if (!e.target.classList.contains('word')) return;
             e.preventDefault();
             const wordEl = e.target;
+
+            // ALWAYS INIT AUDIO ON TAP
+            initAudio();
 
             if (!selectedWord) {
                 selectedWord = wordEl;
@@ -318,103 +295,71 @@
                     const wordText = wordToClone.textContent;
 
                     plusElement.remove();
-
                     const duplicate = document.createElement('span');
-                    duplicate.className = 'word';
-                    duplicate.textContent = wordText;
-                    duplicate.style.color = '#ffffff';
-
+                    duplicate.className = 'word'; duplicate.textContent = wordText; duplicate.style.color = '#ffffff';
                     wordToClone.parentNode.insertBefore(duplicate, wordToClone.nextSibling);
                     wordToClone.parentNode.insertBefore(document.createTextNode(' '), duplicate.nextSibling);
 
                     playCloneSound();
-                    wordToClone.classList.add('cloning');
-                    duplicate.classList.add('cloning');
+                    wordToClone.classList.add('cloning'); duplicate.classList.add('cloning');
                     
                     setTimeout(() => {
-                        wordToClone.classList.remove('cloning');
-                        duplicate.classList.remove('cloning');
-                        selectedWord.classList.remove('selected');
-                        selectedWord = null;
+                        wordToClone.classList.remove('cloning'); duplicate.classList.remove('cloning');
+                        selectedWord.classList.remove('selected'); selectedWord = null;
                     }, 400);
-                    
                     return;
                 }
 
                 selectedWord.textContent = word2;
                 wordEl.textContent = word1;
 
-                wordEl.classList.add('swapping');
-                selectedWord.classList.add('swapping');
+                wordEl.classList.add('swapping'); selectedWord.classList.add('swapping');
                 playSwapSound();
                 
                 if (!triggered) checkSentence();
                 else checkForGrammarTrap();
-                
-                // Always check for the ominous trap
                 checkForOminousTrap();
 
                 setTimeout(() => {
-                    wordEl.classList.remove('swapping');
-                    selectedWord.classList.remove('swapping');
-                    selectedWord.classList.remove('selected');
-                    selectedWord = null;
+                    wordEl.classList.remove('swapping'); selectedWord.classList.remove('swapping');
+                    selectedWord.classList.remove('selected'); selectedWord = null;
                 }, 300);
             }
         });
 
         function triggerAnger1() {
             sentenceEl.appendChild(document.createElement('br'));
-            const tempSpan = document.createElement('span');
-            tempSpan.style.color = '#ffffff';
+            const tempSpan = document.createElement('span'); tempSpan.style.color = '#ffffff';
             sentenceEl.appendChild(tempSpan);
-
             const text = "You think you are funny? Well I'm a smart person. And I think you are an idiot for even trying. Give up.";
             let i = 0;
             const interval = setInterval(() => {
                 if (i < text.length) { tempSpan.textContent += text[i]; playTypeSound(); i++; } 
-                else {
-                    clearInterval(interval); tempSpan.remove(); createWords(text, sentenceEl);
-                }
+                else { clearInterval(interval); tempSpan.remove(); createWords(text, sentenceEl); }
             }, 40);
         }
 
         function triggerAnger2() {
             sentenceEl.appendChild(document.createElement('br'));
-            const tempSpan = document.createElement('span');
-            tempSpan.style.color = '#ffffff';
+            const tempSpan = document.createElement('span'); tempSpan.style.color = '#ffffff';
             sentenceEl.appendChild(tempSpan);
-
             const text = "Stop messing around! Do you even know 1+1? I am better than you in every way. You are not smart at all and you need to get out of here! Not I as I am really smart. Get out of here you dumb idiot!";
             let i = 0;
             const interval = setInterval(() => {
                 if (i < text.length) { tempSpan.textContent += text[i]; playAngryTypeSound(); i++; } 
-                else {
-                    clearInterval(interval); tempSpan.remove(); createWords(text, sentenceEl);
-                }
+                else { clearInterval(interval); tempSpan.remove(); createWords(text, sentenceEl); }
             }, 25); 
         }
 
-        // THE OMINOUS TRAP
-        function triggerOminous() {
-            // Darken the background to deep red-black
+        function triggerOminousVisual() {
             document.body.style.backgroundColor = '#1a0000';
-            
-            // Play the creepy drone
-            playOminousSound();
-            
-            // Add a line break after "way."
             sentenceEl.appendChild(document.createElement('br'));
-            
-            // Create the red ominous text container
             const ominousSpan = document.createElement('span');
             ominousSpan.className = 'ominous';
             sentenceEl.appendChild(ominousSpan);
 
             const text = "Oh I know a way indeed. A way to death perhaps?";
             let i = 0;
-            
-            // Slow, deliberate typing
             const interval = setInterval(() => {
                 if (i < text.length) {
                     ominousSpan.textContent += text[i];
@@ -422,20 +367,16 @@
                     i++;
                 } else {
                     clearInterval(interval);
-                    // Convert to clickable words after typing finishes
                     const finalText = ominousSpan.textContent;
                     ominousSpan.remove();
-                    
                     const words = finalText.split(' ');
                     words.forEach(word => {
                         const span = document.createElement('span');
-                        span.className = 'word ominous';
-                        span.textContent = word;
-                        sentenceEl.appendChild(span);
-                        sentenceEl.appendChild(document.createTextNode(' '));
+                        span.className = 'word ominous'; span.textContent = word;
+                        sentenceEl.appendChild(span); sentenceEl.appendChild(document.createTextNode(' '));
                     });
                 }
-            }, 80); // Slow and creepy
+            }, 80);
         }
     </script>
 </body>
