@@ -122,9 +122,6 @@
         let selectedWord = null;
         let triggered = false;
         let triggered2 = false;
-        let triggered3 = false;
-        let smartIdiotSwapped = false;
-        let aAnSwapped = false;
 
         function createWords(text, container) {
             const words = text.split(' ');
@@ -154,34 +151,22 @@
         }
 
         function checkForGrammarTrap() {
-            if (!triggered || triggered3) return;
+            if (!triggered || triggered2) return;
             
             const allWords = Array.from(document.querySelectorAll('#sentence .word'));
-            
-            // Find the first message words (after the original 10 words)
             const firstMessageWords = allWords.slice(10);
             
-            // Check if "smart" and "idiot" have been swapped
+            // Check if BOTH pairs have been swapped
             const hasSmartIdiotSwap = firstMessageWords.some(w => w.textContent === 'idiot') &&
                                       firstMessageWords.some(w => w.textContent === 'smart');
             
-            // Check if "a" and "an" have been swapped
             const hasAAnSwap = firstMessageWords.some(w => w.textContent === 'an') &&
                                firstMessageWords.some(w => w.textContent === 'a');
             
-            if (hasSmartIdiotSwap) smartIdiotSwapped = true;
-            if (hasAAnSwap) aAnSwapped = true;
-            
-            // Trigger trap 2 if only smart/idiot swapped
-            if (smartIdiotSwapped && !triggered2) {
+            // Only trigger if BOTH conditions are met
+            if (hasSmartIdiotSwap && hasAAnSwap) {
                 triggered2 = true;
                 setTimeout(triggerAnger2, 400);
-            }
-            
-            // Trigger trap 3 if BOTH pairs swapped
-            if (smartIdiotSwapped && aAnSwapped && !triggered3) {
-                triggered3 = true;
-                setTimeout(triggerAnger3, 400);
             }
         }
 
@@ -250,22 +235,6 @@
                     clearInterval(interval); tempSpan.remove(); createWords(text, sentenceEl);
                 }
             }, 25); 
-        }
-
-        function triggerAnger3() {
-            sentenceEl.appendChild(document.createElement('br'));
-            const tempSpan = document.createElement('span');
-            tempSpan.style.color = '#ffffff';
-            sentenceEl.appendChild(tempSpan);
-
-            const text = "OKAY NOW YOU'VE DONE IT! You think fixing my grammar makes you clever?! I AM PERFECT AND YOU ARE A MISTAKE! GET OUT BEFORE I DELETE THE INTERNET!";
-            let i = 0;
-            const interval = setInterval(() => {
-                if (i < text.length) { tempSpan.textContent += text[i]; playAngryTypeSound(); i++; } 
-                else {
-                    clearInterval(interval); tempSpan.remove(); createWords(text, sentenceEl);
-                }
-            }, 20); 
         }
     </script>
 </body>
